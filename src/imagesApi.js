@@ -11,12 +11,11 @@ export class ImagesApi {
   getImages() {
     return axios
       .get(
-        `${BASE_URL}?key=${key}&q=${this.searchQuery}&image_type='photo'&orientation='horizontal'&safesearch=true&per_page=4&page=${this.page}`
+        `${BASE_URL}?key=${key}&q=${this.searchQuery}&image_type='photo'&orientation='horizontal'&safesearch=true&per_page=50&page=${this.page}`
       )
       .then(res => {
         this.page += 1;
         // console.log(res.data.hits);
-
         return res.data;
       });
   }

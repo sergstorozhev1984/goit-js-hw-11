@@ -18,26 +18,33 @@ function onSearch(e) {
   e.preventDefault();
   imagesApi.query = e.currentTarget.elements.searchQuery.value.trim();
   imagesApi.resetPage();
+  clearMarkup();
   if (!imagesApi.query) {
-    Notify.info(
+    Notify.failure(
       'Sorry, there are no images matching your search query. Please try again.'
     );
+    onLoadHidden();
+    return;
   }
   imagesApi.getImages().then(data => {
     if (!data.hits.length) {
-      Notify.info(
+      Notify.failure(
         'Sorry, there are no images matching your search query. Please try again.'
       );
+      clearMarkup();
+      return;
     }
-    const arrImg = data.hits;
-    console.log(arrImg);
+    const arrHits = data.hits;
+    // console.log(data.totalHits);
+    // console.log(arrHits);
 
-    renderGallery(arrImg);
+    renderGallery(arrHits);
+    Notify.success(`Hooray! We found ${data.totalHits} images.`)
   });
 }
 
-function renderGallery(arrImg) {
-  const imgsMarkup = arrImg
+function renderGallery(arrHits) {
+  const imgsMarkup = arrHits
     .map(
       ({
         largeImageURL,
@@ -47,7 +54,7 @@ function renderGallery(arrImg) {
         comments,
         downloads,
       }) => `<div class="photo-card">
-            <img src="${largeImageURL}" alt="${tags}" loading="lazy" width="400" height="400">
+            <img src="${largeImageURL}" alt="${tags}" loading="lazy" width="320" height="212">
             <div class="info">
                 <p class="info-item">
                     <b>Likes: ${likes}</b>
@@ -67,21 +74,35 @@ function renderGallery(arrImg) {
     .join('');
 
   refs.galleryListEl.insertAdjacentHTML('beforeend', imgsMarkup);
-  onLoadHidden();
+  onLoadShown();
 }
 
 function onLoadMore() {
   imagesApi.getImages().then(data => {
+    console.log(data);
     if (!data.hits.length) {
-      Notify.info(
+      Notify.failure(
         'Sorry, there are no images matching your search query. Please try again.'
       );
     }
-
-    renderGallery(data.hits);
-    onLoadHidden();
+    if (data.total === data.totalHits) {
+      renderGallery(data.hits);
+      onLoadHidden();
+      Notify.info("We're sorry, but you've reached the end of search results.");
+      return;
+    } else {
+      renderGallery(data.hits);
+      onLoadShown();
+    }
   });
 }
 function onLoadHidden() {
-  refs.btnLoadMoreEl.classList.toggle('is-hidden');
+  refs.btnLoadMoreEl.classList.add('is-hidden');
+}
+function onLoadShown() {
+  refs.btnLoadMoreEl.classList.remove('is-hidden');
+}
+function clearMarkup() {
+  refs.galleryListEl.innerHTML = '';
+  return onLoadHidden();
 }
