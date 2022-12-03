@@ -85,7 +85,7 @@ function onLoadMore() {
         'Sorry, there are no images matching your search query. Please try again.'
       );
     }
-    if (data.total === data.totalHits) {
+    if (data.total <= data.totalHits) {
       renderGallery(data.hits);
       onLoadHidden();
       Notify.info("We're sorry, but you've reached the end of search results.");
