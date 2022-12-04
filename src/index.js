@@ -13,6 +13,9 @@ refs.btnLoadMoreEl.addEventListener('click', onLoadMore);
 
 const imagesApi = new ImagesApi();
 onLoadHidden();
+let currentPage = 1;
+let totalPages = 0;
+const limit = 40;
 
 function onSearch(e) {
   e.preventDefault();
@@ -26,21 +29,26 @@ function onSearch(e) {
     onLoadHidden();
     return;
   }
-  imagesApi.getImages().then(data => {
-    if (!data.hits.length) {
-      Notify.failure(
-        'Sorry, there are no images matching your search query. Please try again.'
-      );
-      clearMarkup();
-      return;
-    }
-    const arrHits = data.hits;
-    // console.log(data.totalHits);
-    // console.log(arrHits);
+  imagesApi
+    .getImages()
+    .then(data => {
+      totalPages = Math.ceil(data.totalHits / limit);
+      if (!data.hits.length) {
+        Notify.failure(
+          'Sorry, there are no images matching your search query. Please try again.'
+        );
+        clearMarkup();
+        return;
+      }
+      const arrHits = data.hits;
 
-    renderGallery(arrHits);
-    Notify.success(`Hooray! We found ${data.totalHits} images.`)
-  });
+      renderGallery(arrHits);
+      Notify.success(`Hooray! We found ${data.totalHits} images.`);
+    })
+    .catch(error => {
+      Notify.failure("Error URL-address or you havn't key authorization");
+      console.log(error);
+    });
 }
 
 function renderGallery(arrHits) {
@@ -78,23 +86,25 @@ function renderGallery(arrHits) {
 }
 
 function onLoadMore() {
-  imagesApi.getImages().then(data => {
-    console.log(data);
-    if (!data.hits.length) {
-      Notify.failure(
-        'Sorry, there are no images matching your search query. Please try again.'
-      );
-    }
-    if (data.total <= data.totalHits) {
-      renderGallery(data.hits);
-      onLoadHidden();
-      Notify.info("We're sorry, but you've reached the end of search results.");
-      return;
-    } else {
-      renderGallery(data.hits);
-      onLoadShown();
-    }
-  });
+  imagesApi
+    .getImages()
+    .then(data => {
+      if (currentPage < totalPages) {
+        currentPage += 1;
+        renderGallery(data.hits);
+        onLoadShown();
+        console.log(currentPage);
+        console.log(totalPages);
+      } else if (totalPages === currentPage) {
+        onLoadHidden();
+        Notify.info(
+          "We're sorry, but you've reached the end of search results."
+        );
+      }
+    })
+    .catch(error => {
+      console.log(error);
+    });
 }
 function onLoadHidden() {
   refs.btnLoadMoreEl.classList.add('is-hidden');
