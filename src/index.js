@@ -1,5 +1,4 @@
 import { ImagesApi } from './imagesApi';
-import { ImagesApi } from './imagesApi';
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
 
 const refs = {
@@ -17,10 +16,11 @@ let currentPage = 1;
 let totalPages = 0;
 const limit = 40;
 
-function onSearch(e) {
+async function onSearch(e) {
   e.preventDefault();
   imagesApi.query = e.currentTarget.elements.searchQuery.value.trim();
   imagesApi.resetPage();
+  currentPage = 1;
   clearMarkup();
   if (!imagesApi.query) {
     Notify.failure(
@@ -29,9 +29,9 @@ function onSearch(e) {
     onLoadHidden();
     return;
   }
-  imagesApi
+  const data = await imagesApi
     .getImages()
-    .then(data => {
+    
       totalPages = Math.ceil(data.totalHits / limit);
       if (!data.hits.length) {
         Notify.failure(
@@ -43,12 +43,7 @@ function onSearch(e) {
       const arrHits = data.hits;
 
       renderGallery(arrHits);
-      Notify.success(`Hooray! We found ${data.totalHits} images.`);
-    })
-    .catch(error => {
-      Notify.failure("Error URL-address or you havn't key authorization");
-      console.log(error);
-    });
+      Notify.success(`Hooray! We found ${data.totalHits} images.`);  
 }
 
 function renderGallery(arrHits) {
@@ -85,26 +80,25 @@ function renderGallery(arrHits) {
   onLoadShown();
 }
 
-function onLoadMore() {
-  imagesApi
+async function onLoadMore() {
+  const data = await imagesApi
     .getImages()
-    .then(data => {
+    
+      renderGallery(data.hits);
       if (currentPage < totalPages) {
         currentPage += 1;
-        renderGallery(data.hits);
+        
         onLoadShown();
-        console.log(currentPage);
-        console.log(totalPages);
+        // console.log(currentPage);
+        console.log(totalPages, currentPage);
       } else if (totalPages === currentPage) {
         onLoadHidden();
         Notify.info(
           "We're sorry, but you've reached the end of search results."
         );
       }
-    })
-    .catch(error => {
-      console.log(error);
-    });
+    
+    
 }
 function onLoadHidden() {
   refs.btnLoadMoreEl.classList.add('is-hidden');
